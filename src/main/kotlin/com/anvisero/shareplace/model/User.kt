@@ -33,4 +33,16 @@ data class User(
     var updatedAt: Instant? = null,
     @Column(name = "account_status")
     var accountStatus: AccountStatus
-)
+) {
+    constructor(user: User) : this(
+        id = user.id,
+        yandexId = user.yandexId,
+        role = user.role,
+        email = user.email,
+        password = user.password,
+        phone = user.phone,
+        createdAt = user.createdAt,
+        updatedAt = user.updatedAt,
+        accountStatus = user.accountStatus
+    )
+}

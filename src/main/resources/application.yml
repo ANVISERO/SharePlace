@@ -14,7 +14,7 @@ spring:
   jpa:
     database: POSTGRESQL
     hibernate:
-      ddl-auto: none
+      ddl-auto: create
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
@@ -24,10 +24,18 @@ spring:
     init:
       mode: always
 jwt:
-  access-token-key: '{"kty":"oct","k":"hi7S5RX5ZRZooHA0RKGctZ-KtR9FoESgCnH-3BNg5XI"}'
-  refresh-token-key: '{"kty":"oct","k":"956PBFst1FguLr5irJD-aQ"}'
-#logging:
-#  level:
-#    org:
-#      springframework:
-#        security: TRACE
+  cookie-token-key: '{"kty":"oct","k":"956PBFst1FguLr5irJD-aQ"}'
+#security:
+#  basic:
+#    enable: false
+#  jwt:
+#    uri: /auth/**
+#    header: Authorization
+#    prefix: Bearer
+#    expiration: 86400
+#    secret: JwtSecretKey
+logging:
+  level:
+    org:
+      springframework:
+        security: TRACE
