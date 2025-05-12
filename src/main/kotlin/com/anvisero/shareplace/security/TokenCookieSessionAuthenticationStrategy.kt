@@ -27,10 +27,10 @@ class TokenCookieSessionAuthenticationStrategy : SessionAuthenticationStrategy {
             val token: Token = this.tokenCookieFactory.apply(authentication)
             val tokenString = this.tokenStringSerializer.apply(token)
 
-            val cookie = Cookie("__Host-auth-token", tokenString)
+            val cookie = Cookie("auth-token", tokenString)
             cookie.path = "/"
             cookie.domain = null
-            cookie.secure = true
+            cookie.secure = false
             cookie.isHttpOnly = true
             cookie.maxAge = ChronoUnit.SECONDS.between(Instant.now(), token.expiresAt).toInt()
 

@@ -16,7 +16,7 @@ class TokenCookieAuthenticationConverter(
     override fun convert(request: HttpServletRequest): Authentication? {
         if (request.cookies != null) {
             return Stream.of(*request.cookies)
-                .filter { cookie: Cookie? -> cookie!!.name == "__Host-auth-token" }
+                .filter { cookie: Cookie? -> cookie!!.name == "auth-token" }
                 .findFirst()
                 .map(Function { cookie: Cookie? ->
                     val token: Token? = this.tokenCookieStringDeserializer!!.apply(cookie!!.value)

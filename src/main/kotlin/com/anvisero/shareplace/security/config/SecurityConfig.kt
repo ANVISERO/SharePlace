@@ -15,6 +15,10 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
 import org.springframework.security.config.http.SessionCreationPolicy
 import org.springframework.security.web.SecurityFilterChain
+import org.springframework.web.cors.CorsConfiguration
+import org.springframework.web.cors.CorsConfigurationSource
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource
+
 
 @Configuration
 @EnableWebSecurity(debug = true)
@@ -60,6 +64,9 @@ class SecurityConfig {
 
         http
 //            .with(HexConfigurer()) {}
+            .cors { corsConfigurer ->
+                corsConfigurer.configurationSource(corsConfigurationSource())
+            }
             .csrf { it.disable() }
             .authorizeHttpRequests { requests ->
                 requests
@@ -99,6 +106,22 @@ class SecurityConfig {
 ////                }
 ////            }
 //        return http.build()
+    }
+
+    @Bean
+    fun corsConfigurationSource(): CorsConfigurationSource {
+        val config = CorsConfiguration()
+
+        config.allowedOrigins = mutableListOf<String?>("http://localhost:5173") // разрешаем только фронт
+        config.setAllowedMethods(mutableListOf<String?>("GET", "POST", "OPTIONS"))
+        config.allowedHeaders = mutableListOf<String?>("*") // или явно перечисли нужные заголовки
+        config.allowCredentials = true // разрешить куки и авторизацию
+        config.maxAge = 3600L // кеш preflight-запроса на 1 час
+
+        val source = UrlBasedCorsConfigurationSource()
+        source.registerCorsConfiguration("/**", config) // применяем ко всем endpoint'ам
+
+        return source
     }
 
 }

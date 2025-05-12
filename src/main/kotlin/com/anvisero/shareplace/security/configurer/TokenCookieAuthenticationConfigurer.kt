@@ -26,7 +26,7 @@ class TokenCookieAuthenticationConfigurer
     override fun init(builder: HttpSecurity) {
         builder.logout { logout: LogoutConfigurer<HttpSecurity> ->
             logout.addLogoutHandler(
-                CookieClearingLogoutHandler("__Host-auth-token")
+                CookieClearingLogoutHandler("auth-token")
             )
 //                .addLogoutHandler { request: HttpServletRequest?, response: HttpServletResponse?, authentication: Authentication? ->
 //                    if (authentication != null &&
