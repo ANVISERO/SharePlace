@@ -13,6 +13,7 @@ class TokenCookieFactory : Function<Authentication, Token> {
 
     override fun apply(authentication: Authentication): Token {
         val now = Instant.now()
+        println("authentication.name : ${authentication.name}")
         return Token(
             UUID.randomUUID(), authentication.name,
             authentication.authorities.stream()

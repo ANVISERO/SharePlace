@@ -5,9 +5,11 @@ import com.anvisero.shareplace.model.enum.AccountStatus
 import org.springframework.security.core.GrantedAuthority
 import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.core.userdetails.UserDetails
+import java.time.Instant
 
 class YandexUserDetails(
-    private val user: User
+    private val user: User,
+    private val token: Token? = null,
 ) : UserDetails {
 
     override fun getAuthorities(): Collection<GrantedAuthority> {
@@ -24,8 +26,12 @@ class YandexUserDetails(
     override fun isAccountNonLocked(): Boolean =
         user.accountStatus != AccountStatus.BLOCKED
 
-    override fun isCredentialsNonExpired(): Boolean =
-        user.accountStatus != AccountStatus.BLOCKED
+    override fun isCredentialsNonExpired(): Boolean {
+        if (token != null) {
+            return token.expiresAt.isAfter(Instant.now())
+        }
+        return user.accountStatus != AccountStatus.BLOCKED
+    }
 
     override fun isEnabled(): Boolean =
         user.accountStatus != AccountStatus.BLOCKED

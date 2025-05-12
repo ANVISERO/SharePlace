@@ -7,7 +7,6 @@ import com.anvisero.shareplace.security.serialize.TokenCookieJweStringSerializer
 import com.anvisero.shareplace.service.UserService
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource
@@ -21,15 +20,17 @@ class YandexService(
 //    private val tokenProvider: JwtTokenProvider
 ) {
 
-    fun loginUser(oauthToken: String,
-                  request: HttpServletRequest,
-                  response: HttpServletResponse,): String {
+    fun loginUser(
+        oauthToken: String,
+        request: HttpServletRequest,
+        response: HttpServletResponse,
+    ): String {
         val strategy = TokenCookieSessionAuthenticationStrategy()
         strategy.setTokenStringSerializer(tokenCookieJweStringSerializer)
 
         val yandexUser = yandexClient.getUserInfo(oauthToken)
         println(yandexUser.toString())
-        if (yandexUser ==  null) {
+        if (yandexUser == null) {
             throw Exception("Yandex User Not Found")
         }
 

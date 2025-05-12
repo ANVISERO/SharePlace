@@ -2,7 +2,10 @@ package com.anvisero.shareplace.security.config
 
 import com.anvisero.shareplace.security.TokenCookieSessionAuthenticationStrategy
 import com.anvisero.shareplace.security.configurer.TokenCookieAuthenticationConfigurer
+import com.anvisero.shareplace.security.serialize.TokenCookieJweStringDeserializer
 import com.anvisero.shareplace.security.serialize.TokenCookieJweStringSerializer
+import com.anvisero.shareplace.service.UserService
+import com.nimbusds.jose.crypto.DirectDecrypter
 import com.nimbusds.jose.crypto.DirectEncrypter
 import com.nimbusds.jose.jwk.OctetSequenceKey
 import org.springframework.beans.factory.annotation.Value
@@ -12,8 +15,6 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
 import org.springframework.security.config.http.SessionCreationPolicy
 import org.springframework.security.web.SecurityFilterChain
-import org.springframework.security.web.csrf.CookieCsrfTokenRepository
-import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler
 
 @Configuration
 @EnableWebSecurity(debug = true)
@@ -32,10 +33,27 @@ class SecurityConfig {
     }
 
     @Bean
+    @Throws(java.lang.Exception::class)
+    fun tokenCookieAuthenticationConfigurer(
+        @Value("\${jwt.cookie-token-key}") cookieTokenKey: String,
+        userService: UserService
+    ): TokenCookieAuthenticationConfigurer {
+        return TokenCookieAuthenticationConfigurer()
+            .tokenCookieStringDeserializer(
+                TokenCookieJweStringDeserializer(
+                    DirectDecrypter(
+                        OctetSequenceKey.parse(cookieTokenKey)
+                    )
+                )
+            )
+            .userService(userService)
+    }
+
+    @Bean
     fun securityFilterChain(
         http: HttpSecurity,
         tokenCookieJweStringSerializer: TokenCookieJweStringSerializer,
-//        tokenCookieAuthenticationConfigurer: TokenCookieAuthenticationConfigurer
+        tokenCookieAuthenticationConfigurer: TokenCookieAuthenticationConfigurer
     ): SecurityFilterChain {
         val strategy = TokenCookieSessionAuthenticationStrategy()
         strategy.setTokenStringSerializer(tokenCookieJweStringSerializer)
@@ -52,6 +70,7 @@ class SecurityConfig {
                 session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                     .sessionAuthenticationStrategy(strategy)
             }
+            .with(tokenCookieAuthenticationConfigurer) {}
 //            .csrf { csrf ->
 //                csrf.csrfTokenRepository(CookieCsrfTokenRepository())
 //                    .csrfTokenRequestHandler(CsrfTokenRequestAttributeHandler())
