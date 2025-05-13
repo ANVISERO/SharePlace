@@ -4,7 +4,7 @@ import com.anvisero.shareplace.security.TokenCookieSessionAuthenticationStrategy
 import com.anvisero.shareplace.security.configurer.TokenCookieAuthenticationConfigurer
 import com.anvisero.shareplace.security.serialize.TokenCookieJweStringDeserializer
 import com.anvisero.shareplace.security.serialize.TokenCookieJweStringSerializer
-import com.anvisero.shareplace.service.UserService
+import com.anvisero.shareplace.user.service.UserService
 import com.nimbusds.jose.crypto.DirectDecrypter
 import com.nimbusds.jose.crypto.DirectEncrypter
 import com.nimbusds.jose.jwk.OctetSequenceKey
@@ -70,7 +70,8 @@ class SecurityConfig {
             .csrf { it.disable() }
             .authorizeHttpRequests { requests ->
                 requests
-                    .requestMatchers("/yandex/signin").permitAll()
+                    .requestMatchers("/api/v1/auth/yandex/signin").permitAll()
+                    .requestMatchers("/error").permitAll()
                     .anyRequest().authenticated()
             }
             .sessionManagement { session ->
@@ -84,42 +85,51 @@ class SecurityConfig {
 //                    .sessionAuthenticationStrategy { _, _, _ -> }
 //            }
         return http.build()
-
-//        http
-////            .authorizeHttpRequests { authorizeHttpRequests ->
-////                authorizeHttpRequests.anyRequest().authenticated()
-////                authorizeHttpRequests.requestMatchers("/hello.html").permitAll()
-////            }
-////            .csrf { disable() }
-////            .httpBasic(withDefaults())
-////            .addFilterBefore(DeniedClientFilter(), DisableEncodeUrlFilter::class.java)
-////            .formLogin { }
-//            .authorizeHttpRequests { authorizeHttpRequests ->
-//                authorizeHttpRequests.requestMatchers("/hello.html").permitAll()
-//                    .anyRequest().authenticated()
-//            }
-////            .exceptionHandling {
-////                it.authenticationEntryPoint { request, response, authException ->
-////                    authException.printStackTrace()
-//////                    response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized")
-////                    response.sendRedirect("http://localhost:8081/login")
-////                }
-////            }
-//        return http.build()
     }
 
     @Bean
     fun corsConfigurationSource(): CorsConfigurationSource {
         val config = CorsConfiguration()
 
-        config.allowedOrigins = mutableListOf<String?>("http://localhost:5173") // разрешаем только фронт
-        config.setAllowedMethods(mutableListOf<String?>("GET", "POST", "OPTIONS"))
-        config.allowedHeaders = mutableListOf<String?>("*") // или явно перечисли нужные заголовки
-        config.allowCredentials = true // разрешить куки и авторизацию
-        config.maxAge = 3600L // кеш preflight-запроса на 1 час
+        // 1. Укажите РАЗРЕШЕННЫЕ ИСТОЧНИКИ (URL вашего фронтенда)
+        // НЕ ИСПОЛЬЗУЙТЕ "*", если allowCredentials = true
+        config.allowedOrigins = listOf(
+            "http://localhost:3000", // Для локальной разработки фронтенда
+            "http://localhost:5173", // Если используете Vite, как в предыдущих примерах
+            "https://your-production-frontend.com" // Для продакшена
+            // Добавьте другие домены, если необходимо
+        )
+
+        // 2. Укажите РАЗРЕШЕННЫЕ HTTP-МЕТОДЫ
+        config.allowedMethods = listOf(
+            "GET",
+            "POST",
+            "PUT",
+            "DELETE",
+            "OPTIONS", // OPTIONS всегда должен быть разрешен для preflight-запросов
+            "PATCH"
+        )
+
+        config.allowedHeaders = listOf(
+            "Authorization",        // Для токенов аутентификации
+            "Content-Type",         // Для указания типа контента (например, application/json)
+            "Accept",
+            "X-Requested-With",
+            "Origin",               // Обычно добавляется браузером
+            "Access-Control-Request-Method", // Обычно добавляется браузером
+            "Access-Control-Request-Headers" // Обычно добавляется браузером
+        )
+
+        config.exposedHeaders = listOf(
+            "Content-Disposition"
+        )
+
+        config.allowCredentials = true
+
+        config.maxAge = 3600L
 
         val source = UrlBasedCorsConfigurationSource()
-        source.registerCorsConfiguration("/**", config) // применяем ко всем endpoint'ам
+        source.registerCorsConfiguration("/**", config)
 
         return source
     }

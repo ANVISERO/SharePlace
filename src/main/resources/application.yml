@@ -11,6 +11,14 @@ spring:
     username: test
     password: test
     driver-class-name:
+  data:
+    mongodb:
+       host: localhost
+       port: 27017
+       database: test
+       username: test
+       password: test
+       authentication-database: admin
   jpa:
     database: POSTGRESQL
     hibernate:

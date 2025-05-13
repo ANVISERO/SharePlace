@@ -3,7 +3,7 @@ package com.anvisero.shareplace.security.configurer
 import com.anvisero.shareplace.security.converter.TokenCookieAuthenticationConverter
 import com.anvisero.shareplace.security.model.Token
 import com.anvisero.shareplace.security.service.TokenAuthenticationUserDetailsService
-import com.anvisero.shareplace.service.UserService
+import com.anvisero.shareplace.user.service.UserService
 import org.springframework.security.authentication.AuthenticationManager
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer

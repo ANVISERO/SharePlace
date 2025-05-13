@@ -1,10 +1,52 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <title>Hello!</title>
+    <title>STOMP over SockJS Test</title>
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@stomp/stompjs@7/bundles/stomp.umd.min.js"></script>
 </head>
 <body>
+<h1>Test STOMP over SockJS</h1>
+<script>
+    // Убедитесь, что вы ЗАЛОГИНЕНЫ в браузере на http://localhost:8081,
+    // чтобы auth-token cookie был установлен для этого домена!
+    console.log('Attempting to connect...');
 
+    const stompClient = new StompJs.Client({
+        webSocketFactory: function () {
+            // Важно: SockJS URL обычно http/https, а не ws/wss
+            return new SockJS('http://localhost:8081/ws-chat');
+        },
+        connectHeaders: {
+            // Сюда можно добавить заголовки для STOMP CONNECT фрейма, если нужно
+            // login: "user",
+            // passcode: "password",
+        },
+        debug: function (str) {
+            console.log('STOMP DEBUG: ' + str);
+        },
+        reconnectDelay: 5000, // мс
+        onConnect: function (frame) {
+            console.log('STOMP Connected: ' + frame);
+            // Теперь можно подписываться и отправлять сообщения
+            // Пример подписки (замените roomId):
+            // stompClient.subscribe('/topic/room/someRoomId', function (message) {
+            //     console.log('Received: ' + message.body);
+            // });
+        },
+        onStompError: function (frame) {
+            console.error('Broker reported error: ' + frame.headers['message']);
+            console.error('Additional details: ' + frame.body);
+        },
+        onWebSocketError: function(event) {
+            console.error('WebSocket error', event);
+        },
+        onWebSocketClose: function(event) {
+            console.log('WebSocket closed', event);
+        }
+    });
+
+    stompClient.activate();
+</script>
 </body>
 </html>

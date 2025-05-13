@@ -1,8 +1,9 @@
 package com.anvisero.shareplace.security.service
 
+import com.anvisero.shareplace.exception.NotFoundException
 import com.anvisero.shareplace.security.model.Token
-import com.anvisero.shareplace.security.model.YandexUserDetails
-import com.anvisero.shareplace.service.UserService
+import com.anvisero.shareplace.security.model.yandex.YandexUserDetails
+import com.anvisero.shareplace.user.service.UserService
 import org.springframework.security.core.userdetails.AuthenticationUserDetailsService
 import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.security.core.userdetails.UsernameNotFoundException
@@ -18,15 +19,12 @@ class TokenAuthenticationUserDetailsService(
             val token = authenticationToken.principal as Token
             println("Token principal: $token")
             val user = userService!!.findByYandexId(token.subject)
-            if (user == null) {
-                throw Exception("loadUserDetails User Not Found")
-            }
-
+                ?: throw NotFoundException("Пользователь", token.subject)
             val userDetails = YandexUserDetails(user)
             println("userDetails.toString(): ${userDetails.toString()}")
             return userDetails
         }
 
-        throw UsernameNotFoundException("Principal must me of type Token")
+        throw UsernameNotFoundException("Principal должно быть типа Token")
     }
 }
