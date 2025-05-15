@@ -12,12 +12,19 @@ data class ChatRoom(
     @Id
     val id: String? = null,
     var name: String?,
-    @Indexed
-    val participantIds: Set<String>,
+    val participantsInfo: Map<String, ParticipantInfo> = emptyMap(),
     val type: RoomType,
-    @Indexed
+    @Indexed // Индекс для сортировки/фильтрации по времени последней активности
     var lastActivityAt: Instant? = Instant.now(),
     @CreatedDate
-    var createdAt: Instant? = null,
+    var createdAt: Instant? = null, // Будет установлено автоматически Spring Data, если null
     val creatorId: String? = null
 )
+
+data class ParticipantInfo(
+    val userId: String,
+    val firstName: String,
+    val surname: String,
+    val profilePictureUrl: String?
+)
+

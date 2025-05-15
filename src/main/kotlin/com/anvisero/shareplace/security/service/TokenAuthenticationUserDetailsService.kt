@@ -18,7 +18,7 @@ class TokenAuthenticationUserDetailsService(
         if (authenticationToken.principal is Token) {
             val token = authenticationToken.principal as Token
             println("Token principal: $token")
-            val user = userService!!.findByYandexId(token.subject)
+            val user = userService!!.findById(token.subject)
                 ?: throw NotFoundException("Пользователь", token.subject)
             val userDetails = YandexUserDetails(user)
             println("userDetails.toString(): ${userDetails.toString()}")

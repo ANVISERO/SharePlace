@@ -27,6 +27,11 @@ class UserService(
         return userRepository.findByYandexId(yandexId)
     }
 
+fun findById(userId: String): User? {
+        log.info("retrieve user with user id: $userId")
+        return userRepository.findById(userId.toLong()).orElseThrow {  NotFoundException("Пользователь", userId) }
+    }
+
     fun registerUser(yandexUser: YandexUser): User {
         log.info("register user with yandex id: ${yandexUser.id}")
 
@@ -39,12 +44,12 @@ class UserService(
         return savedUser
     }
 
-    fun getUserProfile(requestedId: Long, yandexIdFromToken: String):
+    fun getUserProfile(requestedId: Long, userId: String):
             UserInfo {
         val user = userRepository.findById(requestedId)
             .orElseThrow { NotFoundException("Пользователь", requestedId) }
 
-        if (user.yandexId != yandexIdFromToken) {
+        if (user.id.toString() != userId) {
             throw ForbiddenException()
         }
 
@@ -52,19 +57,19 @@ class UserService(
             .orElseThrow { NotFoundException("Информация о пользователе", requestedId) }
     }
 
-    fun getMyUserProfile(yandexIdFromToken: String): UserInfo {
-        val user : User = userRepository.findByYandexId(yandexIdFromToken)
-            ?: throw NotFoundException("Пользователь", yandexIdFromToken)
+    fun getMyUserProfile(userId: String): UserInfo {
+        val user : User = userRepository.findById(userId.toLong()).orElseThrow { Exception("Can not convert String to Long") }
+            ?: throw NotFoundException("Пользователь", userId)
 
         return userInfoRepository.findById(user.id!!)
-            .orElseThrow { NotFoundException("Информация о пользователе", user.id!!) }
+            .orElseThrow { NotFoundException("Информация о пользователе", user.id.toString()) }
     }
 
-    fun updateUserProfile(requestedId: Long, yandexIdFromToken: String, update: UserInfo): UserInfo {
+    fun updateUserProfile(requestedId: Long, userId: String, update: UserInfo): UserInfo {
         val user = userRepository.findById(requestedId)
             .orElseThrow { NotFoundException("Пользователь", requestedId) }
 
-        if (user.yandexId != yandexIdFromToken) {
+        if (user.id.toString() != userId) {
             throw ForbiddenException()
         }
 

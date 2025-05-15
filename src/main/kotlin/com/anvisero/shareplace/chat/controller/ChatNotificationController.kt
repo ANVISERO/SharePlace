@@ -1,4 +1,4 @@
-package com.anvisero.shareplace.chat.model.controller
+package com.anvisero.shareplace.chat.controller
 
 import com.anvisero.shareplace.chat.payload.NotificationResponse
 import com.anvisero.shareplace.chat.service.ChatNotificationService

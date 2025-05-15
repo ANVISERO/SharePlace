@@ -17,9 +17,9 @@ class YandexUserDetails(
         return listOf(SimpleGrantedAuthority("ROLE_${user.role.name}"))
     }
 
-    override fun getPassword(): String? = null // OAuth-пользователи без пароля
+    override fun getPassword(): String? = null
 
-    override fun getUsername(): String = user.yandexId
+    override fun getUsername(): String = user.id.toString()
 
     override fun isAccountNonExpired(): Boolean =
         user.accountStatus != AccountStatus.BLOCKED

@@ -14,7 +14,6 @@ data class ChatMessage(
     val roomId: String,
     @Indexed
     val senderId: String,
-    val senderUsername: String,
     val content: String,
     @CreatedDate
     @Indexed

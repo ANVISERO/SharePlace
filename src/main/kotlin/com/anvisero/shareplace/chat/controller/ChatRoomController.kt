@@ -1,8 +1,9 @@
-package com.anvisero.shareplace.chat.model.controller
+package com.anvisero.shareplace.chat.controller
 
-import com.anvisero.shareplace.chat.payload.ChatRoomResponse
+import com.anvisero.shareplace.chat.model.ChatRoom
 import com.anvisero.shareplace.chat.payload.CreateChatRoomRequest
 import com.anvisero.shareplace.chat.service.ChatRoomService
+import com.anvisero.shareplace.exception.NotFoundException
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.data.web.PageableDefault
@@ -14,32 +15,32 @@ import org.springframework.web.bind.annotation.*
 
 @RestController
 @RequestMapping("/api/chat/rooms")
-// @CrossOrigin(origins = ["http://localhost:3000"]) // Настройте CORS, если фронтенд на другом порту
-class ChatRoomController(private val chatRoomService: ChatRoomService) {
+class ChatRoomController(
+    private val chatRoomService: ChatRoomService
+) {
 
     @PostMapping
-    fun createChatRoom(@RequestBody request: CreateChatRoomRequest): ResponseEntity<ChatRoomResponse> {
+    fun createChatRoom(@RequestBody request: CreateChatRoomRequest): ResponseEntity<ChatRoom> {
         val userDetails = SecurityContextHolder.getContext().authentication.principal as UserDetails
         val chatRoom = chatRoomService.createChatRoom(request, userDetails.username)
         return ResponseEntity.status(HttpStatus.CREATED).body(chatRoom)
     }
 
     @GetMapping("/{roomId}")
-    fun getChatRoom(@PathVariable roomId: String): ResponseEntity<ChatRoomResponse> {
+    fun getChatRoom(@PathVariable roomId: String): ResponseEntity<ChatRoom> {
         val userDetails = SecurityContextHolder.getContext().authentication.principal as UserDetails
 
         val chatRoom = chatRoomService.getChatRoomById(roomId, userDetails.username)
         return chatRoom?.let { ResponseEntity.ok(it) }
-            ?: ResponseEntity.notFound().build()
+            ?: throw NotFoundException("Chat room", roomId)
     }
 
     @GetMapping
     fun getCurrentUserChatRooms(
         @PageableDefault(size = 20, sort = ["lastActivityAt"]) pageable: Pageable
-    ): ResponseEntity<Page<ChatRoomResponse>> {
+    ): ResponseEntity<Page<ChatRoom>> {
         val userDetails = SecurityContextHolder.getContext().authentication.principal as UserDetails
 
-        // Предполагается, что service знает, как получить текущего пользователя
         val chatRooms = chatRoomService.getChatRoomsForCurrentUser(userDetails.username, pageable)
         return ResponseEntity.ok(chatRooms)
     }
