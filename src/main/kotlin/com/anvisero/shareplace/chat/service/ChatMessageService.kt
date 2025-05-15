@@ -14,7 +14,8 @@ import org.springframework.stereotype.Service
 class ChatMessageService(
     private val chatMessageRepository: ChatMessageRepository,
     private val chatRoomRepository: ChatRoomRepository,
-    private val chatRoomService: ChatRoomService
+    private val chatRoomService: ChatRoomService,
+    private val chatNotificationService: ChatNotificationService
 ) {
     private val logger = LoggerFactory.getLogger(ChatMessageService::class.java)
 
@@ -39,6 +40,14 @@ class ChatMessageService(
 
         // TODO: Здесь можно создать и отправить уведомления другим участникам комнаты
         // notificationService.createAndSendNewMessageNotifications(savedMessage)
+
+        try {
+            chatNotificationService.createNotificationsForNewMessage(savedMessage, room)
+        } catch (e: Exception) {
+            // Логируем ошибку, но не прерываем основной процесс сохранения сообщения,
+            // если создание уведомлений не является критичным для успеха операции.
+            logger.error("Ошибка при создании уведомлений для сообщения ID ${savedMessage.id}: ", e)
+        }
 
         return savedMessage
     }

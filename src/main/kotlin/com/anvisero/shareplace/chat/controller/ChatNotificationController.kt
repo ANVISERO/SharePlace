@@ -1,7 +1,8 @@
 package com.anvisero.shareplace.chat.controller
 
-import com.anvisero.shareplace.chat.payload.NotificationResponse
+import com.anvisero.shareplace.chat.model.ChatNotification
 import com.anvisero.shareplace.chat.service.ChatNotificationService
+import org.slf4j.LoggerFactory
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.data.web.PageableDefault
@@ -12,25 +13,26 @@ import org.springframework.web.bind.annotation.*
 
 @RestController
 @RequestMapping("/api/chat/notifications")
-// @CrossOrigin(origins = ["http://localhost:3000"])
 class ChatNotificationController(
     private val chatNotificationService: ChatNotificationService
 ) {
+
+    private val logger = LoggerFactory.getLogger(ChatNotificationController::class.java)
 
     @GetMapping
     fun getMyNotifications(
         @PageableDefault(size = 20, sort = ["createdAt"]) pageable: Pageable
     ):
-            ResponseEntity<Page<NotificationResponse>> {
+            ResponseEntity<Page<ChatNotification>> {
         val userDetails = SecurityContextHolder.getContext().authentication.principal as UserDetails
         val notifications = chatNotificationService.getNotificationsForCurrentUser(userDetails.username, pageable)
         return ResponseEntity.ok(notifications)
     }
 
     @GetMapping("/unread")
-    fun getMyUnreadNotifications(): ResponseEntity<List<NotificationResponse>> {
+    fun getMyUnreadNotifications(): ResponseEntity<List<ChatNotification>> {
         val userDetails = SecurityContextHolder.getContext().authentication.principal as UserDetails
-
+        logger.info("непрочитанные сообщения пользователя ${userDetails.username}")
         val notifications = chatNotificationService.getUnreadNotificationsForCurrentUser(userDetails.username)
         return ResponseEntity.ok(notifications)
     }
@@ -44,7 +46,7 @@ class ChatNotificationController(
     }
 
     @PostMapping("/{notificationId}/read")
-    fun markNotificationAsRead(@PathVariable notificationId: String): ResponseEntity<NotificationResponse> {
+    fun markNotificationAsRead(@PathVariable notificationId: String): ResponseEntity<ChatNotification> {
         val userDetails = SecurityContextHolder.getContext().authentication.principal as UserDetails
 
         val notification = chatNotificationService.markNotificationAsRead(notificationId, userDetails.username)
@@ -52,11 +54,22 @@ class ChatNotificationController(
             ?: ResponseEntity.notFound().build()
     }
 
-    @PostMapping("/read-all")
-    fun markAllNotificationsAsRead(): ResponseEntity<List<NotificationResponse>> {
+    @PostMapping("/{chatId}/read-all")
+    fun markAllNotificationsForChatAsRead(
+        @PathVariable chatId: String,
+        @PageableDefault(size = 20, sort = ["createdAt"]) pageable: Pageable
+    ): ResponseEntity<List<ChatNotification>> {
         val userDetails = SecurityContextHolder.getContext().authentication.principal as UserDetails
 
-        val notifications = chatNotificationService.markAllNotificationsAsReadForCurrentUser(userDetails.username)
+        val notifications = chatNotificationService.markAllNotificationsForChatAsRead(chatId, userDetails.username, pageable)
+        return ResponseEntity.ok(notifications)
+    }
+
+    @PostMapping("/read-all")
+    fun markAllNotificationsAsRead( @PageableDefault(size = 20, sort = ["createdAt"]) pageable: Pageable): ResponseEntity<List<ChatNotification>> {
+        val userDetails = SecurityContextHolder.getContext().authentication.principal as UserDetails
+
+        val notifications = chatNotificationService.markAllNotificationsAsReadForCurrentUser(userDetails.username, pageable)
         return ResponseEntity.ok(notifications)
     }
 }

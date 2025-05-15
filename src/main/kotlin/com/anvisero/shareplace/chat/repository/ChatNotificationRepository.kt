@@ -10,8 +10,10 @@ import org.springframework.stereotype.Repository
 interface ChatNotificationRepository : MongoRepository<ChatNotification, String> {
 
     fun findByRecipientUserIdOrderByCreatedAtDesc(recipientUserId: String, pageable: Pageable): Page<ChatNotification>
+    fun findByRecipientUserIdAndRoomIdAndIsReadOrderByCreatedAtDesc(
+        recipientUserId: String, roomId: String, isRead: Boolean, pageable: Pageable
+    ): Page<ChatNotification>
 
-    fun findByRecipientUserIdOrderByCreatedAtDesc(recipientUserId: String): List<ChatNotification>
-
+    fun findByRecipientUserIdAndIsReadOrderByCreatedAtDesc(recipientUserId: String, isRead: Boolean): List<ChatNotification>
     fun countByRecipientUserId(recipientUserId: String): Long
 }

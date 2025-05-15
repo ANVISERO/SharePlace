@@ -14,6 +14,7 @@ data class ChatNotification(
     val recipientUserId: String,
     val message: String,
     val roomId: String? = null,
+    var isRead: Boolean = false,
     @CreatedDate
     @Indexed
     var createdAt: Instant? = null

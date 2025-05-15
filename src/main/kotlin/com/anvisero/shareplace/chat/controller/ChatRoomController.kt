@@ -4,6 +4,7 @@ import com.anvisero.shareplace.chat.model.ChatRoom
 import com.anvisero.shareplace.chat.payload.CreateChatRoomRequest
 import com.anvisero.shareplace.chat.service.ChatRoomService
 import com.anvisero.shareplace.exception.NotFoundException
+import org.slf4j.LoggerFactory
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.data.web.PageableDefault
