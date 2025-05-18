@@ -1,0 +1,102 @@
+asyncapi: 3.0.0
+info:
+  title: SharePlace Chat API
+  version: 1.0.0
+  description: >-
+    API для обмена сообщениями в чат-комнатах SharePlace через WebSockets
+    (STOMP).
+     Клиенты подключаются к WebSocket эндпоинту, а затем используют STOMP для отправки и получения сообщений.
+servers:
+  production:
+    host: shareplace.ru
+    protocol: wss
+    description: Production WebSocket/STOMP сервер
+    pathname: /ws-chat
+    bindings:
+      ws:
+        bindingVersion: 0.1.0
+  development:
+    host: localhost:8081
+    protocol: ws
+    description: Development WebSocket/STOMP сервер
+    pathname: /ws-chat
+    bindings:
+      ws:
+        bindingVersion: 0.1.0
+channels:
+  app.chat.sendMessage.{roomId}:
+    address: app.chat.sendMessage.{roomId}
+    messages:
+      chatMessage:
+        $ref: '#/components/messages/chatMessage'
+    description: |
+      Клиент отправляет сообщения в этот канал для конкретной комнаты.
+      STOMP destination: /app/chat.sendMessage/{roomId}
+    parameters:
+      roomId:
+        $ref: '#/components/parameters/roomId'
+  topic.room.{roomId}:
+    description: >
+      Клиент подписывается на этот канал для получения сообщений из конкретной
+      комнаты.
+
+      STOMP destination: /topic/room/{roomId}
+    parameters:
+      roomId:
+        $ref: '#/components/parameters/roomId'
+    messages:
+      chatMessageResponse:
+        $ref: '#/components/messages/chatMessage'
+    bindings:
+      stomp:
+        destination: /topic/room/{roomId}
+        bindingVersion: 0.1.0
+operations:
+  receiveChatMessage:
+    action: receive
+    channel:
+      $ref: '#/channels/app.chat.sendMessage.{roomId}'
+    summary: Обрабатывает входящее сообщение чата от клиента и сохраняет его.
+    messages:
+      - $ref: '#/channels/app.chat.sendMessage.{roomId}/messages/chatMessage'
+  sendChatMessageToRoom:
+    action: send
+    channel:
+      $ref: '#/channels/topic.room.{roomId}'
+    summary: Отправляет сохраненное сообщение чата всем подписчикам комнаты.
+    messages:
+      - $ref: '#/channels/topic.room.{roomId}/messages/chatMessageResponse'
+    bindings:
+      stomp:
+        bindingVersion: 0.1.0
+components:
+  messages:
+    chatMessage:
+      name: chatMessage
+      title: Chat message
+      summary: Сообщение, отправляемое клиентом для отправки в чат.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/chatMessage'
+  schemas:
+    chatMessage:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Уникальный идентификатор сообщения
+        roomId:
+          type: string
+          description: Уникальный идентификатор комнаты
+        senderId:
+          type: string
+          description: Уникальный идентификатор отправителя
+        content:
+          type: string
+          description: Само сообщение
+        timestamp:
+          type: string
+          description: Время отправки
+  parameters:
+    roomId:
+      description: Уникальный идентификатор комнаты.

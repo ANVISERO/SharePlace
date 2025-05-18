@@ -46,4 +46,10 @@ logging:
   level:
     org:
       springframework:
-        security: TRACE
+#        security: TRACE
+        messaging: TRACE
+        web:
+          socket: TRACE
+    reactor:
+      netty:
+        tcp: TRACE

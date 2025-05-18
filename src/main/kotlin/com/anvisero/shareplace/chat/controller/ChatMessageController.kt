@@ -34,8 +34,8 @@ class ChatMessageController(
         logger.info("Received WebSocket message for room $roomId: $request")
         try {
             val savedMessage = chatMessageService.saveMessage(roomId, request)
-            simpMessagingTemplate.convertAndSend("/topic/room/$roomId", savedMessage)
-            logger.info("Message sent to /topic/room/$roomId")
+            simpMessagingTemplate.convertAndSend("/topic/room.$roomId", savedMessage)
+            logger.info("Message sent to /topic/room.$roomId")
         } catch (e: Exception) {
             logger.error("Error processing message for room $roomId: ${e.message}", e)
         }

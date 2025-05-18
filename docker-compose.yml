@@ -27,8 +27,40 @@ services:
 #    volumes:
 #      - postgres-data:/var/lib/postgresql/data
 
+  rabbitmq:
+    image: rabbitmq:3.13-management # Рекомендуется использовать конкретную версию с management-плагином
+    container_name: my_rabbit_service # Имя контейнера для удобства
+    hostname: rabbitmq_host # Имя хоста внутри Docker-сети (может быть полезно)
+    ports:
+      # Порт AMQP (основной протокол RabbitMQ)
+      - "5672:5672"
+      # Порт для веб-интерфейса управления RabbitMQ
+      - "15672:15672"
+      # Порт для STOMP, который вы используете в Spring конфигурации
+      - "61613:61613"
+    volumes:
+      # Создает именованный том для персистентного хранения данных RabbitMQ
+      # Это важно, чтобы данные не терялись при перезапуске/удалении контейнера
+      - rabbitmq_data:/var/lib/rabbitmq/
+    environment:
+      # По умолчанию RabbitMQ использует пользователя 'guest' с паролем 'guest'.
+      # Эти учетные данные работают для подключения с localhost (включая другие контейнеры в той же сети Docker).
+      # Для production следует определить собственных пользователей и пароли:
+      # RABBITMQ_DEFAULT_USER: user
+      # RABBITMQ_DEFAULT_PASS: password
+      # RABBITMQ_DEFAULT_VHOST: /
+      TZ: "Europe/Paris" # Пример установки часового пояса для логов контейнера
+    healthcheck:
+      # Простая проверка работоспособности RabbitMQ
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 30s # Как часто выполнять проверку
+      timeout: 10s  # Максимальное время ожидания ответа на проверку
+      retries: 5    # Количество попыток перед тем, как считать сервис неработоспособным
+
 volumes:
   mongo-data:
     driver: local
   postgres-data:
+    driver: local
+  rabbitmq_data:
     driver: local
