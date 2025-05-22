@@ -1,0 +1,725 @@
+openapi: 3.0.3
+info:
+  title: SharePlace API
+  version: v1
+  description: API for SharePlace application, including user management, authentication, and chat functionalities.
+servers:
+  - url: http://localhost:8081
+    description: Development server
+
+components:
+  schemas:
+    YandexLoginRequest:
+      type: object
+      required:
+        - oauthToken
+      properties:
+        oauthToken:
+          type: string
+          description: Yandex OAuth token for authentication.
+
+    UserInfo:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: User's unique identifier.
+          readOnly: true
+        name:
+          type: string
+          description: User's first name.
+        surname:
+          type: string
+          description: User's last name.
+        email:
+          type: string
+          format: email
+          description: User's email address.
+        phone:
+          type: string
+          nullable: true
+          description: User's phone number.
+        profilePictureUrl:
+          type: string
+          format: url
+          description: URL of the user's profile picture.
+        birthday:
+          type: string
+          format: date
+          nullable: true
+          description: User's birthday.
+        sex:
+          type: string
+          description: User's sex/gender.
+        profession:
+          type: string
+          nullable: true
+          description: User's profession.
+        aboutMe:
+          type: string
+          nullable: true
+          description: A short description about the user.
+        languages:
+          type: string
+          nullable: true
+          description: Languages spoken by the user (e.g., comma-separated).
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp of user creation.
+          readOnly: true
+          nullable: true
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp of last user update.
+          readOnly: true
+          nullable: true
+
+    UserSearchResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+        surname:
+          type: string
+        profilePictureUrl:
+          type: string
+          format: url
+          nullable: true
+
+    ChatMessage:
+      type: object
+      properties:
+        id:
+          type: string
+          nullable: true
+          description: Message unique identifier.
+        roomId:
+          type: string
+          description: Identifier of the chat room this message belongs to.
+        senderId:
+          type: string
+          description: Identifier of the message sender.
+        senderName:
+          type: string
+          description: Display name of the message sender.
+        content:
+          type: string
+          description: Content of the message.
+        timestamp:
+          type: string
+          format: date-time
+          description: Timestamp when the message was sent.
+
+    SendMessageRequest:
+      properties:
+        content:
+          type: string
+          description: Message content.
+
+    ChatNotification:
+      type: object
+      properties:
+        id:
+          type: string
+          nullable: true
+        recipientUserId:
+          type: string
+        message:
+          type: string
+        roomId:
+          type: string
+          nullable: true
+        isRead:
+          type: boolean
+          default: false
+        createdAt:
+          type: string
+          format: date-time
+          nullable: true
+
+    CreateChatRoomRequest:
+      type: object
+      required:
+        - participantIds
+        - type
+      properties:
+        name:
+          type: string
+          nullable: true
+          description: Name of the chat room (optional for private chats).
+        participantIds:
+          type: array
+          items:
+            type: string
+          description: Set of user IDs to be participants in the chat room.
+          minItems: 1
+        type:
+          $ref: '#/components/schemas/RoomType'
+
+    RoomType:
+      type: string
+      description: Type of the chat room.
+      enum:
+        - PRIVATE
+        - GROUP
+
+    ParticipantInfo:
+      type: object
+      properties:
+        userId:
+          type: string
+        firstName:
+          type: string
+        surname:
+          type: string
+        profilePictureUrl:
+          type: string
+          format: url
+          nullable: true
+
+    ChatRoom:
+      type: object
+      properties:
+        id:
+          type: string
+          nullable: true
+        name:
+          type: string
+          nullable: true
+        participantsInfo:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/ParticipantInfo'
+        type:
+          $ref: '#/components/schemas/RoomType'
+        lastActivityAt:
+          type: string
+          format: date-time
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+          nullable: true
+        creatorId:
+          type: string
+          nullable: true
+
+    PageOfChatMessage:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/ChatMessage'
+        totalPages:
+          type: integer
+        totalElements:
+          type: integer
+          format: int64
+        number:
+          type: integer
+          description: Current page number (0-indexed).
+        size:
+          type: integer
+          description: Number of items per page.
+        first:
+          type: boolean
+        last:
+          type: boolean
+        numberOfElements:
+          type: integer
+        empty:
+          type: boolean
+
+    PageOfChatNotification:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/ChatNotification'
+
+        totalPages:
+          type: integer
+        totalElements:
+          type: integer
+          format: int64
+        number:
+          type: integer
+        size:
+          type: integer
+        first:
+          type: boolean
+        last:
+          type: boolean
+        numberOfElements:
+          type: integer
+        empty:
+          type: boolean
+
+    PageOfChatRoom:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/ChatRoom'
+
+        totalPages:
+          type: integer
+        totalElements:
+          type: integer
+          format: int64
+        number:
+          type: integer
+        size:
+          type: integer
+        first:
+          type: boolean
+        last:
+          type: boolean
+        numberOfElements:
+          type: integer
+        empty:
+          type: boolean
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+security:
+  - bearerAuth: []
+
+paths:
+  /api/v1/auth/yandex/signin:
+    post:
+      tags:
+        - Auth
+      summary: Yandex Sign In
+      description: Authenticates a user using a Yandex OAuth token.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/YandexLoginRequest'
+      responses:
+        '200':
+          description: Successfully authenticated. Returns a user identifier or session token.
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: "jwt_or_user_identifier_string"
+        '400':
+          description: Invalid Yandex token or bad request.
+
+  /api/v1/users/{id}/profile:
+    get:
+      tags:
+        - Users
+      summary: Get User Profile by ID
+      description: Retrieves the profile information for a specific user.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Numeric ID of the user to get.
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserInfo'
+        '403':
+          description: Forbidden if not authorized to view this profile.
+        '404':
+          description: User not found.
+    put:
+      tags:
+        - Users
+      summary: Update User Profile
+      description: Updates the profile information for a specific user. Requires authentication.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Numeric ID of the user to update.
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserInfo'
+      responses:
+        '200':
+          description: Profile updated successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserInfo'
+        '400':
+          description: Invalid input.
+        '403':
+          description: Forbidden if not authorized to update this profile.
+        '404':
+          description: User not found.
+
+  /api/v1/users/me:
+    get:
+      tags:
+        - Users
+      summary: Get My Profile
+      description: Retrieves the profile information for the currently authenticated user.
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserInfo'
+        '401':
+          description: Unauthorized if no token is provided or token is invalid.
+
+  /api/v1/users/search:
+    get:
+      tags:
+        - Users
+      summary: Search Users
+      description: Searches for users based on a query string.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: query
+          in: query
+          required: true
+          description: Search query string.
+          schema:
+            type: string
+      responses:
+        '200':
+          description: A list of users matching the query.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/UserSearchResponse'
+        '401':
+          description: Unauthorized.
+
+  /api/chat/rooms/{roomId}/messages:
+    get:
+      tags:
+        - Chat Messages
+      summary: Get Message History for a Room
+      description: Retrieves paginated message history for a specific chat room.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: roomId
+          in: path
+          required: true
+          description: Identifier of the chat room.
+          schema:
+            type: string
+        - name: page
+          in: query
+          description: Page number (0-indexed).
+          schema:
+            type: integer
+            default: 0
+        - name: size
+          in: query
+          description: Number of messages per page.
+          schema:
+            type: integer
+            default: 50
+        - name: sort
+          in: query
+          description: Sorting criteria (e.g., timestamp,asc or timestamp,desc).
+          schema:
+            type: string
+            default: "timestamp,asc"
+      responses:
+        '200':
+          description: Successfully retrieved message history.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PageOfChatMessage'
+        '401':
+          description: Unauthorized.
+        '403':
+          description: Forbidden if user is not part of the room.
+        '404':
+          description: Room not found.
+
+  /api/chat/notifications:
+    get:
+      tags:
+        - Chat Notifications
+      summary: Get My Notifications
+      description: Retrieves paginated notifications for the current user.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          description: Page number (0-indexed).
+          schema:
+            type: integer
+            default: 0
+        - name: size
+          in: query
+          description: Number of notifications per page.
+          schema:
+            type: integer
+            default: 20
+        - name: sort
+          in: query
+          description: Sorting criteria (e.g., createdAt,asc).
+          schema:
+            type: string
+            default: "createdAt,desc"
+      responses:
+        '200':
+          description: Successfully retrieved notifications.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PageOfChatNotification'
+        '401':
+          description: Unauthorized.
+
+  /api/chat/notifications/unread:
+    get:
+      tags:
+        - Chat Notifications
+      summary: Get My Unread Notifications
+      description: Retrieves a list of all unread notifications for the current user.
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successfully retrieved unread notifications.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ChatNotification'
+        '401':
+          description: Unauthorized.
+
+  /api/chat/notifications/unread/count:
+    get:
+      tags:
+        - Chat Notifications
+      summary: Get My Unread Notification Count
+      description: Retrieves the count of unread notifications for the current user.
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successfully retrieved unread notification count.
+          content:
+            application/json: # Или text/plain, если возвращается просто число
+              schema:
+                type: integer
+                format: int64
+        '401':
+          description: Unauthorized.
+
+  /api/chat/notifications/{notificationId}/read:
+    post:
+      tags:
+        - Chat Notifications
+      summary: Mark Notification As Read
+      description: Marks a specific notification as read for the current user.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: notificationId
+          in: path
+          required: true
+          description: Identifier of the notification to mark as read.
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Notification marked as read.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChatNotification'
+        '401':
+          description: Unauthorized.
+        '403':
+          description: Forbidden if the notification does not belong to the user.
+        '404':
+          description: Notification not found.
+
+  /api/chat/notifications/{chatId}/read-all:
+    post:
+      tags:
+        - Chat Notifications
+      summary: Mark All Notifications For a Chat As Read
+      description: Marks all notifications for a specific chat (room) as read for the current user.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: chatId # Имя параметра в пути - chatId, возможно, должно быть roomId?
+          in: path
+          required: true
+          description: Identifier of the chat/room whose notifications to mark as read.
+          schema:
+            type: string
+
+      responses:
+        '200':
+          description: All notifications for the chat marked as read. Returns the list of affected notifications.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ChatNotification'
+        '401':
+          description: Unauthorized.
+        '403':
+          description: Forbidden.
+        '404':
+          description: Chat/Room not found or no notifications to mark.
+
+  /api/chat/notifications/read-all:
+    post:
+      tags:
+        - Chat Notifications
+      summary: Mark All My Notifications As Read
+      description: Marks all notifications for the current user as read.
+      security:
+        - bearerAuth: []
+
+      responses:
+        '200':
+          description: All notifications marked as read. Returns the list of affected notifications.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ChatNotification'
+        '401':
+          description: Unauthorized.
+
+  /api/chat/rooms:
+    post:
+      tags:
+        - Chat Rooms
+      summary: Create Chat Room
+      description: Creates a new chat room.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateChatRoomRequest'
+      responses:
+        '201':
+          description: Chat room created successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChatRoom'
+        '400':
+          description: Invalid request payload.
+        '401':
+          description: Unauthorized.
+    get:
+      tags:
+        - Chat Rooms
+      summary: Get Current User Chat Rooms
+      description: Retrieves a paginated list of chat rooms for the currently authenticated user.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          description: Page number (0-indexed).
+          schema:
+            type: integer
+            default: 0
+        - name: size
+          in: query
+          description: Number of chat rooms per page.
+          schema:
+            type: integer
+            default: 20
+        - name: sort
+          in: query
+          description: Sorting criteria (e.g., lastActivityAt,desc).
+          schema:
+            type: string
+            default: "lastActivityAt,desc"
+      responses:
+        '200':
+          description: Successfully retrieved chat rooms.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PageOfChatRoom'
+        '401':
+          description: Unauthorized.
+
+  /api/chat/rooms/{roomId}:
+    get:
+      tags:
+        - Chat Rooms
+      summary: Get Chat Room by ID
+      description: Retrieves details for a specific chat room if the current user is a participant.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: roomId
+          in: path
+          required: true
+          description: Identifier of the chat room.
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successfully retrieved chat room details.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChatRoom'
+        '401':
+          description: Unauthorized.
+        '403':
+          description: Forbidden (user is not a participant).
+        '404':
+          description: Chat room not found.

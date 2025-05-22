@@ -1,6 +1,5 @@
 package com.anvisero.shareplace.chat.service
 
-import com.anvisero.shareplace.chat.controller.ChatMessageController
 import com.anvisero.shareplace.chat.model.ChatMessage
 import com.anvisero.shareplace.chat.payload.SendMessageRequest
 import com.anvisero.shareplace.chat.repository.ChatMessageRepository
